@@ -16,7 +16,7 @@ import json
 
 from typing import Any, Dict, List, Optional
 
-import pytest
+from ccai import testbase
 
 from ccai.restclient.oracle import ocimodels
 from ccai.restclient.oracle.ociclients import build_clients
@@ -257,7 +257,7 @@ def test_unusable_key_is_reported():
                                           "nope\n"
                                           "-----END PRIVATE KEY-----\n")
 
-    with pytest.raises(OciSigningError):
+    with testbase.raises(OciSigningError):
         signer.sign(method="GET", url="https://host/x", now="d")
     return
 
@@ -352,7 +352,7 @@ def test_error_carries_the_oci_code():
                       payload={"code": "BucketNotEmpty",
                                "message": "bucket is not empty"}))
 
-    with pytest.raises(ServiceError) as caught:
+    with testbase.raises(ServiceError) as caught:
         clients["object_storage"].delete_bucket(namespace_name="ns",
                                                 bucket_name="bkt-a")
 
@@ -363,7 +363,7 @@ def test_error_carries_the_oci_code():
     return
 
 
-@pytest.mark.parametrize("status", [429, 500, 503])
+@testbase.parametrize("status", [429, 500, 503])
 def test_throttles_and_server_faults_are_transient(status):
     clients, session = _clients()
     session.queue(method="GET", match="/vcns",
@@ -371,7 +371,7 @@ def test_throttles_and_server_faults_are_transient(status):
                                         payload={"code": "TooManyRequests",
                                                  "message": "slow down"}))
 
-    with pytest.raises(TransientServiceError):
+    with testbase.raises(TransientServiceError):
         clients["virtual_network"].list_vcns(compartment_id="c")
     return
 
@@ -383,7 +383,7 @@ def test_client_errors_are_not_transient():
                                         payload={"code": "NotFound",
                                                  "message": "no"}))
 
-    with pytest.raises(ServiceError) as caught:
+    with testbase.raises(ServiceError) as caught:
         clients["virtual_network"].list_vcns(compartment_id="c")
 
     # Retrying a bad request forever would be worse than failing.
@@ -442,7 +442,7 @@ def test_paginator_refuses_a_non_list_operation():
         return Response(data=OciObject({"id": "x"}), next_page=None)
 
     # Silently accepting this would produce a malformed aggregate.
-    with pytest.raises(TypeError):
+    with testbase.raises(TypeError):
         list_call_get_all_results(_list, compartment_id="c")
     return
 
