@@ -564,3 +564,65 @@ def test_launch_instance_and_terminate_paths():
     assert session.calls[1]["method"] == "DELETE"
     assert session.calls[1]["url"].endswith("/instances/ocid1.instance")
     return
+
+
+def test_list_volume_attachments_path_and_compartment():
+    clients, session = _clients()
+
+    clients["compute"].list_volume_attachments(compartment_id="c")
+
+    call = session.calls[0]
+    assert call["method"] == "GET"
+    assert call["url"].endswith("/20160918/volumeAttachments")
+    assert call["params"]["compartmentId"] == "c"
+    return
+
+
+def test_list_volume_attachments_filters_by_instance_and_volume():
+    clients, session = _clients()
+
+    clients["compute"].list_volume_attachments(
+        compartment_id="c", instance_id="ocid1.instance",
+        volume_id="ocid1.volume")
+
+    # The SDK's snake_case filter keywords go out as OCI's camelCase query.
+    params = session.calls[0]["params"]
+    assert params["instanceId"] == "ocid1.instance"
+    assert params["volumeId"] == "ocid1.volume"
+    return
+
+
+def test_list_volume_attachments_reads_attachment_state():
+    clients, session = _clients()
+    session.queue(method="GET", match="/volumeAttachments",
+                  response=FakeResponse(payload=[
+                      {"id": "ocid1.volumeattachment",
+                       "instanceId": "ocid1.instance",
+                       "volumeId": "ocid1.volume",
+                       "lifecycleState": "ATTACHED"}]))
+
+    response = clients["compute"].list_volume_attachments(
+        compartment_id="c", volume_id="ocid1.volume")
+
+    attachment = response.data[0]
+    assert attachment.instance_id == "ocid1.instance"
+    assert attachment.volume_id == "ocid1.volume"
+    assert attachment.lifecycle_state == "ATTACHED"
+    return
+
+
+def test_list_volume_attachments_pages_through_the_paginator():
+    clients, session = _clients()
+    session.queue(method="GET", match="/volumeAttachments",
+                  response=FakeResponse(payload=[{"id": "a"}],
+                                        headers={"opc-next-page": "tok-1"}))
+    session.queue(method="GET", match="/volumeAttachments",
+                  response=FakeResponse(payload=[{"id": "b"}]))
+
+    response = list_call_get_all_results(
+        clients["compute"].list_volume_attachments, compartment_id="c")
+
+    # A truncated listing would miss an attachment on a later page.
+    assert [entry.id for entry in response.data] == ["a", "b"]
+    assert session.calls[1]["params"]["page"] == "tok-1"
+    return

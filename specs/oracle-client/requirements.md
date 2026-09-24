@@ -200,7 +200,9 @@ lifecycle needs so that the venue can be driven through this client.
 4. `VirtualNetworkClient` SHALL cover create, delete and list for VCNs,
    subnets, internet gateways, route tables and security lists.
 5. `ComputeClient` SHALL cover `launch_instance`, `terminate_instance`,
-   `list_instances`, `list_images` and `attach_volume`.
+   `list_instances`, `list_images`, `attach_volume` and
+   `list_volume_attachments` (filterable by `instance_id` and / or
+   `volume_id`).
 6. `ComputeManagementClient` SHALL cover `create_instance_configuration`,
    `create_cluster_network`, `terminate_cluster_network` and
    `list_cluster_networks`.

@@ -269,6 +269,31 @@ class ComputeClient(_ServiceClient):
         return self._call(method="POST", path="/volumeAttachments",
                           details=attach_volume_details)
 
+    def list_volume_attachments(self, *, compartment_id: str,
+                                **filters: Any) -> Response:
+        """
+            List volume attachments in a compartment.
+
+            Narrow the listing with the SDK's filter keywords, e.g.
+            ``instance_id=`` and / or ``volume_id=`` (also
+            ``availability_domain=``, ``limit=``, ``page=``).  Each
+            attachment carries ``instance_id``, ``volume_id`` and a
+            ``lifecycle_state`` of ``ATTACHING``, ``ATTACHED``,
+            ``DETACHING`` or ``DETACHED``, which is how a caller tells an
+            attach that is already in place from one that conflicts.
+
+            :param compartment_id: The compartment to list in.
+            :param filters: The snake_case filter keywords.
+
+            :returns: The :class:`Response`, whose ``data`` is the list of
+                attachments for this page.
+        """
+        params = {"compartmentId": compartment_id}
+        params.update(_camel_params(filters))
+        rtnval = self._call(method="GET", path="/volumeAttachments",
+                            params=params)
+        return rtnval
+
 
 class ComputeManagementClient(_ServiceClient):
     """
