@@ -23,14 +23,14 @@ signed too.
 **The paginator is part of the surface.** The venue calls
 ``oci.pagination.list_call_get_all_results`` directly rather than going through
 a client method, so replacing the clients alone would not have been enough.
-:mod:`ocipagination` follows ``next_page`` until the listing is exhausted and
+``ocipagination`` follows ``next_page`` until the listing is exhausted and
 returns ONE response whose ``data`` is every page concatenated — a truncated
 listing would under-report owned resources, which on a teardown path means
 leaked infrastructure.  It refuses a non-list operation rather than silently
 building a malformed aggregate.
 
 **Request models are one class.** The SDK's twenty-nine ``*Details`` types are
-all plain data holders, so :class:`OciModel` serves them all; the named
+all plain data holders, so ``OciModel`` serves them all; the named
 subclasses exist so call sites read the same as before and a mistyped class
 name still fails at import.  Fields left unset are omitted rather than sent as
 null, because OCI distinguishes "not supplied" from "explicitly null" on
